@@ -39,10 +39,13 @@ end
 
 makes all configurations of the given system and injectors, or specific given configurations.
 
+!!! danger "Deprecation Warning"
+    This function is deprecated; just use [`GridSearchSys`](@ref), which wraps this.
+
 ## Args:
  - `sys::System` : the base system to work off of
  - `injectors` (array of `DynamicInjection`): injectors to use. if one dimensional, all configurations of the given injectors will be returned. If 2d, each row of `injectors` will represent output configuration.
- - `busgroups` (array of String or array of `Vector{String}`, optional): if just array of strings, represents list of buses to consider. If array of Vector{String}, each vector of bus names will be grouped together and always receive the same injector type. If not passed, just considers all busses with Generators attached.
+ - `busgroups` (array of String or array of `Vector{String}`, optional): if just array of strings, represents list of buses to consider. If array of Vector{String}, each vector of bus names will be grouped together and always receive the same injector type. If not passed, just considers all buses with Generators attached.
 
 ## Returns:
  - `Dict{Vector{String}, System}`: dictionary of {generator names (ordered) => system}. contains all variations.
@@ -154,7 +157,7 @@ pretty printing for `GridSearchSys` objects.
 function Base.show(io::IO, gss::GridSearchSys)
     print(io, """
     GridSearchSys with $(length(gss)) systems
-      base: System (Busses: $(PSID.get_n_buses(gss.base)))
+      base: System (Buses: $(PSID.get_n_buses(gss.base)))
       header: $(string(gss.header))
       sysdict: Dict{Vector{Any}, Function} with $(length(gss.sysdict)) entries
       results_header: $(string(gss.results_header))
@@ -223,22 +226,33 @@ end
         sys::System, 
         injectors::Union{AbstractArray{DynamicInjection}, AbstractArray{DynamicInjection, 2}}, 
         busgroups::Union{AbstractArray{Vector{String}}, AbstractArray{String}, Nothing} = nothing
+        ;
+        include_default_results::Bool=true
     )
 
-constructor for GridSearchSys with the exact same behavior as [`makeSystems`](@ref).
-automatically adds the columns `error`, `sim`, `sm`, and `dt` to allow results getter methods to be used after saving.
+constructor for GridSearchSys with the same behavior as [`makeSystems`](@ref).
+
+If `include_default_results`, automatically adds the columns `error`, `sim`, `sm`, and `dt` to allow results getter methods to be used after saving. This is very useful if you need all that data afterwards, but it drastically increases the amount of data produced. If you produce too much data, the sims will still run fine, but it might be impossible to load it all back at once (if it doesn't fit in your RAM).
+TLDR; if you're producing way too much data, try setting `include_default_results=false` and just calling `add_result!` only before running the sims.
 
 By default, injector configuration will be represented as a "injector at {bus name or bus names joined by ', '}" for each bus or busgroup.
 
 ## Args:
  - `sys::System` : the base system to work off of
  - `injectors` (array of `DynamicInjection`): injectors to use. if one dimensional, all configurations of the given injectors will be returned. If 2d, each row of `injectors` will represent output configuration.
- - `busgroups` (array of String or array of `Vector{String}`, optional): if just array of strings, represents list of buses to consider. If array of Vector{String}, each vector of bus names will be grouped together and always receive the same injector type. If not passed, just considers all busses with Generators attached.
+ - `busgroups` (array of String or array of `Vector{String}`, optional): if just array of strings, represents list of buses to consider. If array of Vector{String}, each vector of bus names will be grouped together and always receive the same injector type. If not passed, just considers all buses with Generators attached.
+ - `include_default_results` (Bool, optional): defaults to `true`. whether to include the `sim`, `sm`, `dt`, and `error` columns. Saves disk space to set to `false` at the cost of not being able to use `add_result!` after running sims.
 
 ## Returns:
  - `GridSearchSys`: properly initialized GridSearchSys with all the right injectors and the default columns `error`, `sim`, `sm`, and `dt`.
 """
-function GridSearchSys(sys::System, injectors::Union{AbstractArray{T}, AbstractArray{T, 2}}, busgroups::Union{AbstractArray{Vector{String}}, AbstractArray{String}, Nothing}=nothing) where T <: DynamicInjection
+function GridSearchSys(
+    sys::System,
+    injectors::Union{AbstractArray{T}, AbstractArray{T, 2}}, 
+    busgroups::Union{AbstractArray{Vector{String}}, AbstractArray{String}, Nothing}=nothing
+    ;
+    include_default_results::Bool=true
+) where T <: DynamicInjection
     if !(sys.data.time_series_storage isa InfrastructureSystems.InMemoryTimeSeriesStorage)
         @warn "Static time series storage detected. Saving to file may miss system time series storage."
     end
@@ -261,10 +275,12 @@ function GridSearchSys(sys::System, injectors::Union{AbstractArray{T}, AbstractA
     end
     header = (x->"injector at {$x}").(header)
     gss = GridSearchSys(sys, header, newsysdict, Vector(), Vector(), DataFrame(), Inf, "")
-    add_result!(gss, "error", get_error)
-    add_result!(gss, "sim", get_sim)
-    add_result!(gss, "sm", get_sm)
-    add_result!(gss, "dt", get_dt)
+    if include_default_results
+        add_result!(gss, "error", get_error)
+        add_result!(gss, "sim", get_sim)
+        add_result!(gss, "sm", get_sm)
+        add_result!(gss, "dt", get_dt)
+    end
     return gss
 end
 

@@ -15,8 +15,10 @@ We'll start with how to set up the simulations you want to run.
 ## Constructor
 In order to create a `GridSearchSys`, we can use the constructor. This creates all configurations of the given system and injectors, or specific given configurations.
 
+When not given specific configurations, it uses [`get_permutations`](@ref) to get all length-`length(busgroups)` sets of items taken from the `injectors` list with replacement. Essentially, get all possibilities if each bus group can be assigned any of the given injectors, then remove duplicates.
+
 ```@docs; canonical=false
-GridSearchSys(::System, ::Union{AbstractArray{DynamicInjection}, AbstractArray{DynamicInjection, 2}}, ::Union{AbstractArray{Vector{String}}, AbstractArray{String}, Nothing})
+GridSearchSys(::System, ::Union{AbstractArray{DynamicInjection}, AbstractArray{DynamicInjection, 2}}, ::Union{AbstractArray{Vector{String}}, AbstractArray{String}, Nothing}; c::Bool)
 ```
 
 !!! note "Future Changes Possible"
@@ -70,7 +72,7 @@ sm_inj() = DynamicGenerator(
 )
 ```
 
-Now we're ready to call the constructor! For this example, we'll just get all combinations of the two injectors at each of the busses.
+Now we're ready to call the constructor! For this example, we'll just get all combinations of the two injectors at each of the buses.
 
 !!! warn "grid following inverters"
     Grid following inverters CANNOT be attached to the reference bus. If you need to do this, you'll likely have to switch your reference frame to `ConstantFrequency`. 
@@ -112,7 +114,7 @@ GridSearchSys(sys, [gfm_inj() sm_inj() sm_inj()
 
 #### All combinations, with bus groups
 
-Here, we group busses one and two together so they always have the same injector. Note that they aren't electrically connected; they simply always have identical machines attached.
+Here, we group buses one and two together so they always have the same injector. Note that they aren't electrically connected; they simply always have identical machines attached.
 
 ```@example 1
 #                                             bus group 1     bus group 2
@@ -134,7 +136,7 @@ GridSearchSys(sys, [gfm_inj() sm_inj()
 ```
 
 !!! note "a few notes"
-    - if passing specific combinations, it is recommended to also pass `busgroups` to explicitly set the order of the busses. In the second example, `busgroups` is technically redundant, but it makes it clear what injector is being assigned to what bus.
+    - if passing specific combinations, it is recommended to also pass `busgroups` to explicitly set the order of the buses. In the second example, `busgroups` is technically redundant, but it makes it clear what injector is being assigned to what bus.
     - When using `busgroups`, the strings are the bus names. Make sure they match precisely! You'll notice here that `"Bus1"` is missing a space. That's because that is the actual name of the bus.
 
 

@@ -24,7 +24,7 @@ It has a `base` system, a bunch of variables to store how modifications are made
 Here's how to use this package:
 1. use the constructor the create a `GridSearchSys` with all injector variations required
 2. add sweeps of various parameters using `add_generic_sweep!` or one of the specific methods supplied
-3. add results to track with `add_result!` and the [result getters]()
+3. add results to track with `add_result!` and the [Results Getters](@ref)
 4. run simulations with `execute_sims!`, creating a DataFrame with all the results
 5. if not done already, save to file with `save_serde_data`
 6. go about your life, doing whatever you do in your spare time
@@ -74,7 +74,7 @@ gss = GridSearchSys(
     System(path_to_my_raw_file),
     [gfm_inj() gfm_inj() gfm_inj()   # test case 1
      sm_inj() sm_inj() sm_inj()],    # test case 2
-    ["Bus1",   "Bus 2", "Bus 3"],    # corresponding order of busses
+    ["Bus1",   "Bus 2", "Bus 3"],    # corresponding order of buses
 )
 
 # tell it to record injector currents

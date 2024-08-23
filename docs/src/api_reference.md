@@ -16,8 +16,19 @@ Pages = ["plotting.jl"]
 ```
 
 ## Results Getters
+These functions allow you to store results of your simulations. Feel free to write your own; these are just here to get you started.
+They all return either a value or a vector of values. If they return a vector, this vector will still be entered into the DataFrame as ONE entry, unless you pass a vector of `titles` with the same length as the returned vector of values to [`add_result!`](@ref). In that case, each entry in `titles` will be its own column.
 
 ```@autodocs
 Modules = [PowerSystemsExperiments]
 Pages = ["getters.jl"]
+```
+
+## Sample Models
+`device_models.jl` just contains some sample generator and inverter components with sane parameter values to help you get started easily.
+Not written by me; not sure who wrote these or where the numbers come from. Will update if I find out.
+
+```@autodocs
+Modules = [PowerSystemsExperiments]
+Pages = ["device_models.jl"]
 ```

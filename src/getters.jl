@@ -1,27 +1,4 @@
 """
-WARNING: mostly deprecated. just use `get_sim`.
-
-Saves the `sim` object to file, then returns the filename to be added to the results dataframe.
-"""
-function get_serialized_sim_filename_function_builder(path::String)
-    try
-        mkdir(path)
-    catch
-        println("Failed to create directory $path (maybe it already exists)")
-    end
-
-    function get_serialized_sim_filename(_gss::GridSearchSys, sim::Union{Simulation, Missing}, _sm::Union{PSID.SmallSignalOutput, Missing}, _error::Union{String, Missing})
-        if sim isa Missing
-            return missing
-        end
-        filename = "$(path)/SimObject$(time_ns()).jls"
-        Serialization.serialize(filename, sim)
-        return [filename]
-    end
-    return get_serialized_sim_filename
-end
-
-"""
 gets the time taken to run this simulation.
 """
 function get_dt(_gss::GridSearchSys, _sim::Union{Simulation, Missing}, _sm::Union{PSID.SmallSignalOutput, Missing}, _error::Union{String, Missing}, dt::Real)
@@ -70,7 +47,7 @@ end
 
 # Timestamps are thrown away. If you're using the GridSearchSystem, the returned array will correspond to an even time grid with spacing `dtmax` (the argument you passed to [`execute_sims`](@ref), default 0.02s).
 # """
-function current_magnitude(res::SimulationResults, name::String)
+function _current_magnitude(res::SimulationResults, name::String)
     _, ir = PSID.post_proc_real_current_series(res, name, nothing)
     _, ii = PSID.post_proc_imaginary_current_series(res, name, nothing)
     return sqrt.(ir.^2 .+ ii.^2)
@@ -94,7 +71,7 @@ function get_injector_currents(gss::GridSearchSys, sim::Union{Simulation, Missin
     injectors = [i for i in PSID.get_dynamic_injectors(sim.inputs) if get_name(i) in keys(gen_dict)]
     injectors = Dict(map(x->gen_dict[x], get_name.(injectors)) .=> injectors)
 
-    return [(i in keys(injectors) ? current_magnitude(read_results(sim), get_name(injectors[i])) : missing) for i in get_number.(get_bus.(gens))]
+    return [(i in keys(injectors) ? _current_magnitude(read_results(sim), get_name(injectors[i])) : missing) for i in get_number.(get_bus.(gens))]
 end
 
 """
@@ -113,7 +90,7 @@ function get_inverter_currents(gss::GridSearchSys, sim::Union{Simulation, Missin
     # get dynamic inverters. filter by those in gen_dict (ie, in gss.base) to exclude ZIPE inverters
     inverters = [i for i in get_components(DynamicInverter, sim.sys) if get_name(i) in keys(gen_dict)]
     inverters = Dict(map(x->gen_dict[x], get_name.(inverters)) .=> inverters)
-    return [(i in keys(inverters) ? current_magnitude(read_results(sim), get_name(inverters[i])) : missing) for i in get_number.(get_bus.(gens))]
+    return [(i in keys(inverters) ? _current_magnitude(read_results(sim), get_name(inverters[i])) : missing) for i in get_number.(get_bus.(gens))]
 end
 
 
@@ -129,11 +106,11 @@ function get_generator_speeds(gss::GridSearchSys, sim::Union{Simulation, Missing
     if sim isa Missing
         return Array{Missing}(missing, length(get_components(Generator, gss.base)))
     end
-    gen_busses = collect(get_bus.(get_components(Generator, gss.base)))
-    gen_dict = Dict(get_name.(get_components(Generator, gss.base)) .=> get_number.(gen_busses))
+    gen_buses = collect(get_bus.(get_components(Generator, gss.base)))
+    gen_dict = Dict(get_name.(get_components(Generator, gss.base)) .=> get_number.(gen_buses))
     generators = [i for i in get_components(DynamicGenerator, sys) if i.name in keys(gen_dict)]
     generators = Dict(map(x->gen_dict[x], get_name.(generators)) .=> generators)
-    return [(i in keys(generators) ? generator_speed(res, generators[i].name) : missing) for i in get_number.(gen_busses)]
+    return [(i in keys(generators) ? generator_speed(res, generators[i].name) : missing) for i in get_number.(gen_buses)]
 end
 
 """
@@ -171,7 +148,7 @@ function get_zipe_load_current_magnitudes(gss::GridSearchSys, sim::Union{Simulat
         return Array{Missing}(missing, length(get_components(StandardLoad, gss.base)))
     end
     
-    return ([current_magnitude(sim.results, "load_GFL_inverter"*string(get_number(get_bus(load)))).+ current_magnitude(sim.results, load.name) for load in get_components(StandardLoad, gss.base)])
+    return ([_current_magnitude(sim.results, "load_GFL_inverter"*string(get_number(get_bus(load)))).+ _current_magnitude(sim.results, load.name) for load in get_components(StandardLoad, gss.base)])
 end
 
 """
