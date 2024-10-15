@@ -19,7 +19,11 @@ mutable struct GridSearchSys
 end
 ```
 It has a `base` system, a bunch of variables to store how modifications are made to the system, and a few more variables to specify how to save results.
-
+### Installation
+To install, simply run
+```julia
+pkg> add "https://github.com/reid23/PowerSystemsExperiments.jl.git"
+```
 ### Workflow
 Here's how to use this package:
 1. use the constructor the create a `GridSearchSys` with all injector variations required
