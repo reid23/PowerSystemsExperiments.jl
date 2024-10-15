@@ -5,7 +5,7 @@ A Julia package for high-dimensional plotting and parameter sweeps of power grid
 ## Installation
 
 ```julia
-pkg> add "git@github.com:reid23/PowerSystemsExperiments.jl.git"
+pkg> add "https://github.com/reid23/PowerSystemsExperiments.jl.git"
 ```
 
 ## Getting started
