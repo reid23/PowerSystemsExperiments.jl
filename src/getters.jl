@@ -135,7 +135,7 @@ function get_time(gss::GridSearchSys, sim::Union{Simulation, Missing}, _sm::Unio
     if sim isa Missing
         return [missing]
     end
-    return [get_voltage_magnitude_series(sim.results, get_number(get_bus(first(get_components(StandardLoad, gss.base)))))[1]]
+    return get_voltage_magnitude_series(sim.results, get_number(get_bus(first(get_components(StandardLoad, gss.base)))))[1]
 end
 """
 **RETURNS A VECTOR!** use a vector of column titles if you want each inverter to be a separate column.

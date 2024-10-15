@@ -188,9 +188,9 @@ function makeplots(
     x_title::Union{AbstractString, Nothing} = nothing,
     y_title::Union{AbstractString, Nothing} = nothing,
 
-    col_title_func::Function=identity,
-    row_title_func::Function=identity,
-    legendgroup_title_func::Function=identity,
+    col_title_func::Function=string,
+    row_title_func::Function=string,
+    legendgroup_title_func::Function=string,
     supertitle::Union{AbstractString, Nothing} = nothing,
 
     yaxis_home_range::Union{NamedTuple{(:min, :max), <:Tuple{Real, Real}}, Nothing} = nothing,

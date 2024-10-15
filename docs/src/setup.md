@@ -47,7 +47,10 @@ set_runchecks!(sys, false);
 
 Using `time_series_in_memory=true` I *believe* makes serialization work better but I'm not sure that it's necessary.
 
-Now, we want to choose our injectors. Let's create a dynamic inverter and a dynamic generator. The functions we use here are from 
+Now, we want to choose our injectors. Let's create a dynamic inverter and a dynamic generator.
+
+!!! warn "component naming"
+    Make sure that the names (here `GFM` and `SM`) of each unique injector are unique! PSE uses component names to tell different types of injectors apart.
 
 ```@example 1
 const PSE = PowerSystemsExperiments

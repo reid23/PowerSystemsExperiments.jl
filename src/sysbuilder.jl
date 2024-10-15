@@ -181,7 +181,7 @@ Any of the inputs might be `missing`.
 function add_result!(gss::GridSearchSys, title::AbstractString, getter::Function)
     gss.hfile *= "function $(string(Symbol(getter))) end; "
     push!(gss.results_header, title)
-    push!(gss.results_getters, getter)
+    push!(gss.results_getters, (gss, sim, sm, error, dt) -> [getter(gss, sim, sm, error, dt)])
     if !isempty(gss.df)
         gss.df[!, title] .= map(x->getter(gss, x...), eachrow(select(gss.df, "sim", "sm", "error", "dt")))
     end

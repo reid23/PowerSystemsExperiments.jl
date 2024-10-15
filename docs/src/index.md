@@ -93,7 +93,6 @@ execute_sims!(
     dtmax=0.05, 
     run_transient=true, 
 )
-
 # plot results
 p = makeplots(
     gss.df,
@@ -105,7 +104,7 @@ p = makeplots(
     legendgroup="injector at {Bus 2}",
     margin=100,
     fontsize=12,
-    scattermode="lines"
+    scattermode="lines",
 )
 
 to_documenter(p) # hide
