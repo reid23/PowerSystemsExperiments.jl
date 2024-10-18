@@ -99,6 +99,7 @@ Also, if you don't need that many variables, you can just leave them out. If you
  - AbstractString, Symbol: get from column of df
  - NamedTuple of `(x0, dx)` or `(y0, dy)`: evenly spaced values with given parameters
  - Vector{<:Real}: this specific array every time
+Use the `data_sigdigits` (default: 6) argument to specify how much to round this input data. This significantly helps reduce the size of the exported HTML files.
 
 If you choose to get the series from the dataframe, each element of the column will be one series/trace, so it better be a vector!
 If you have scalar or categorical values, try the default `PlotlyJS.plot(df, ...)` - it's pretty good for that.
@@ -137,9 +138,10 @@ If you have scalar or categorical values, try the default `PlotlyJS.plot(df, ...
  - `color_sort_func` (default: identity): function by which to sort values of `color` before associating with `colorlist` (if no colorbar)
  - `symbollist` (default: 14 different symbols): list of symbols to use for the different values of `markershape`. If you have more than 14 different values, set this array.
  - `use_webgl` (default: `true`): Whether to use scattergl or plain scatter.
+ - `map_to_colorbar` (default: `true`): whether to associate markers with colorbar and show the scale. Generally keep this set to `true`. You may have to set it to false when you have `"lines"` in your `scattermode`. The PlotlyJS documentation is not entirely clear on the effect of these options.
 
 ## Sizes
- - `fontsize` (default 18): what do you think this option does lmao. take a guess
+ - `fontsize` (default 18): font size for most/main text
  - `margin` (default: 200): Int, just the margin size (px)
  - `offsets` (default: `(xtitle = -0.03, ytitle=-0.05, coltitle=0.01, rowtitle=0.01)`): where to put the titles, as a fraction of the plot
  - `yaxis_home_range` and `xaxis_home_range` can be `NamedTuple{(:min, :max), <:Tuple{Real, Real}}`
@@ -198,6 +200,7 @@ function makeplots(
 
     image_export_filename::String = "saved_plot",
     image_export_size::@NamedTuple{height::Int64, width::Int64}=(height=1200, width=1200),
+    data_sigdigits::Int=6,
     margin::Int = 200,
     colorlist::Union{Vector{String}, Vector{<:Colors.Colorant}} = Colors.distinguishable_colors(10),
     symbollist::Vector{<:AbstractString} = ["circle", "square", "diamond", "cross", "triangle-up", "star", "circle-cross", "y-up", "circle-open", "square-open", "diamond-open", "cross-open", "triangle-up-open", "star-open"],
@@ -464,7 +467,7 @@ function makeplots(
                 if trace[color] isa Real && occursin("markers", scattermode)
                     scatargs[:marker].color = [trace[color] for _ in 1:length(if :x in keys(scatargs) scatargs[:x] else scatargs[:y] end)]
                 end
-                if map_to_colorbar && !occursin("lines", scattermode)
+                if map_to_colorbar # && !occursin("lines", scattermode)
                     scatargs[:marker].coloraxis = "coloraxis"
                     scatargs[:marker].showscale = true
                 end
@@ -516,8 +519,8 @@ function makeplots(
         args = step.args[1]
         getcol = colname->[first(data[data[!, slider].==sliderval, :][!, colname]) for data in sliderdata]
         # return getcol(x)
-        if col_updates_on_slider(x)           args["x"] = map(z->round.(z, sigdigits=6), getcol(x)); println("reached x") end
-        if col_updates_on_slider(y)           args["y"] = map(z->round.(z, sigdigits=6), getcol(y)); println("reached y") end
+        if col_updates_on_slider(x)           args["x"] = map(z->round.(z, sigdigits=data_sigdigits), getcol(x)); println("reached x") end
+        if col_updates_on_slider(y)           args["y"] = map(z->round.(z, sigdigits=data_sigdigits), getcol(y)); println("reached y") end
         if col_updates_on_slider(legendgroup) args["legendgroup"] = getcol(legendgroup); println("reached legendgroup") end
         if col_updates_on_slider(legendgroup) args["legendgrouptitle_text"] = getcol(legendgroup); println("reached legendgroup") end
         if col_updates_on_slider(markershape) args["marker.symbol"] = to_marker.(getcol(markershape)); println("reached markershape") end

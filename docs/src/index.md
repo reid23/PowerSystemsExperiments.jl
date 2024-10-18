@@ -31,11 +31,9 @@ Here's how to use this package:
 3. add results to track with `add_result!` and the [Results Getters](@ref)
 4. run simulations with `execute_sims!`, creating a DataFrame with all the results
 5. if not done already, save to file with `save_serde_data`
-6. go about your life, doing whatever you do in your spare time
-7. load your results back with `load_serde_data`
-8. add any more results you want to see with `add_result!`
-9. Analyze the data with `makeplots` or however you like (`makeplots` is still very much pre-release/unstable)
-10. Add some more test cases based on what you found and repeat!
+6. load your results back with `load_serde_data` (if needed)
+7. add any more results you want to see with `add_result!`
+8. Analyze the data with `makeplots` or however you like (`makeplots` is still very much pre-release)
 
 ## (Super) Quick Start
 Do you just need to run a simulation or two, and don't have time to really understand your code?
@@ -77,8 +75,8 @@ sm_inj() = DynamicGenerator("SM", 1.0,
 gss = GridSearchSys(
     System(path_to_my_raw_file),
     [gfm_inj() gfm_inj() gfm_inj()   # test case 1
-     sm_inj() sm_inj() sm_inj()],    # test case 2
-    ["Bus1",   "Bus 2", "Bus 3"],    # corresponding order of buses
+     sm_inj()  sm_inj()  sm_inj()],  # test case 2
+    ["Bus1",   "Bus 2",  "Bus 3"],   # corresponding order of buses
 )
 
 # tell it to record injector currents
