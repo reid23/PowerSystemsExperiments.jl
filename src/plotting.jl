@@ -525,8 +525,8 @@ function makeplots(
         if col_updates_on_slider(legendgroup) args["legendgrouptitle_text"] = getcol(legendgroup); println("reached legendgroup") end
         if col_updates_on_slider(markershape) args["marker.symbol"] = to_marker.(getcol(markershape)); println("reached markershape") end
         if col_updates_on_slider(trace_names) args["name"] = getcol(trace_names); println("reached trace_names") end
-        if col_updates_on_slider(color)       args["marker.color"] = getcol(color); println("reached color")
-                                              args["line.color"] = getcol(color);
+        if col_updates_on_slider(color)       args["marker.color"] = to_color.(getcol(color)); println("reached marker color")
+            if occursin("lines", scatermode)  args["line.color"] = to_color.(getcol(color)); println("reached line color") end
                                             #   args["marker.line.color"] = getcol(color);
         end
         if col_updates_on_slider(opacity)     args["opacity"] = getcol(opacity); println("reached opacity") end
