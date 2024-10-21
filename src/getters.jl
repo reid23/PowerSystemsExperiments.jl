@@ -35,7 +35,7 @@ gets voltage time series at every bus in the system.
 returns them in the same order as `get_components(Generator, gss.base)`.
 """
 function get_bus_voltages(gss::GridSearchSys, sim::Union{Simulation, Missing}, _sm::Union{PSID.SmallSignalOutput, Missing}, _error::Union{String, Missing}, dt::Real)
-    if sim isa Missing
+    if sim isa Missing || isnothing(sim.results)
         return Array{Missing}(missing, length(get_components(Bus, gss.base)))
     else
         return [get_voltage_magnitude_series(sim.results, i)[2] for i in get_number.(get_components(Bus, gss.base))]
@@ -62,7 +62,7 @@ returns them in the same order as `get_components(Generator, gss.base)`.
 """
 function get_injector_currents(gss::GridSearchSys, sim::Union{Simulation, Missing}, _sm::Union{PSID.SmallSignalOutput, Missing}, _error::Union{String, Missing}, dt::Real)
     gens = get_components(Generator, gss.base)
-    if sim isa Missing
+    if sim isa Missing || isnothing(sim.results)
         return Array{Missing}(missing, length(gens))
     end
 
@@ -83,7 +83,7 @@ returns them in the same order as `get_components(Generator, gss.base)`.
 """
 function get_inverter_currents(gss::GridSearchSys, sim::Union{Simulation, Missing}, _sm::Union{PSID.SmallSignalOutput, Missing}, _error::Union{String, Missing}, dt::Real)
     gens = get_components(Generator, gss.base)
-    if sim isa Missing
+    if sim isa Missing || isnothing(sim.results)
         return Array{Missing}(missing, length(gens))
     end
     gen_dict = Dict(get_name.(gens) .=> get_number.(get_bus.(gens)))
@@ -103,7 +103,7 @@ returns them in the same order as `get_components(Generator, gss.base)`.
 """
 function get_generator_speeds(gss::GridSearchSys, sim::Union{Simulation, Missing}, _sm::Union{PSID.SmallSignalOutput, Missing}, _error::Union{String, Missing}, dt::Real)
     throw("unimplemented: not tested yet")
-    if sim isa Missing
+    if sim isa Missing || isnothing(sim.results)
         return Array{Missing}(missing, length(get_components(Generator, gss.base)))
     end
     gen_buses = collect(get_bus.(get_components(Generator, gss.base)))
@@ -121,7 +121,7 @@ Gets the voltage magnitude time series at all ZIPE loads.
 returns them in the same order as `get_components(Generator, gss.base)`.
 """
 function get_zipe_load_voltages(gss::GridSearchSys, sim::Union{Simulation, Missing}, _sm::Union{PSID.SmallSignalOutput, Missing}, _error::Union{String, Missing}, dt::Real)
-    if (sim isa Missing) || (sim.results isa Nothing)
+    if (sim isa Missing) || isnothing(sim.results)
         return Array{Missing}(missing, length(get_components(StandardLoad, gss.base)))
     end
     # the [2] here just gets the voltage instead of a tuple of (time, voltage) since we know the time divisions
@@ -132,7 +132,7 @@ end
 Gets the timestamps for transient results. 
 """
 function get_time(gss::GridSearchSys, sim::Union{Simulation, Missing}, _sm::Union{PSID.SmallSignalOutput, Missing}, _error::Union{String, Missing}, dt::Real)
-    if sim isa Missing
+    if sim isa Missing || isnothing(sim.results)
         return [missing]
     end
     return get_voltage_magnitude_series(sim.results, get_number(get_bus(first(get_components(StandardLoad, gss.base)))))[1]
@@ -144,7 +144,7 @@ Gets the currrent magnitude time series at each ZIPE load.
 """
 function get_zipe_load_current_magnitudes(gss::GridSearchSys, sim::Union{Simulation, Missing}, _sm::Union{PSID.SmallSignalOutput, Missing}, _error::Union{String, Missing}, dt::Real)
     throw("unimplemented: not tested yet.")
-    if (sim isa Missing) || (sim.results isa Nothing)
+    if (sim isa Missing) || isnothing(sim.results)
         return Array{Missing}(missing, length(get_components(StandardLoad, gss.base)))
     end
     
