@@ -1,7 +1,9 @@
 # PowerSystemsExperiments.jl
 
 A Julia package for high-dimensional plotting and parameter sweeps of power grids using NREL SIENNA's `PowerSimulationsDynamics.jl` and PlotlyJS.
-
+> [!Warning]
+> This package is still very much in pre-release. Interfaces are unstable and bugs exist, especially in the plotting side.
+    
 ## Installation
 
 ```julia
