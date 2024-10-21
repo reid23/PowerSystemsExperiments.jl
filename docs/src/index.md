@@ -5,6 +5,9 @@ This package is for running experiments with NREL Sienna's [PowerSimulationsDyna
 - [`GridSearchSys`](@ref) for running simulations with high-dimensional parameter sweeps and organizing the resulting data
 - [`makeplots`](@ref) for visualizing high-dimensional data with interactive plots.
 
+!!! note "Under Development"
+    This package is still under development. It is certainly functional, but only at a pre-release stage. There will be bugs and changes, espeically on the plotting side, as development continues. If you encounter bugs, please create issues on GitHub, and if you want to help out, please feel free to make changes and pull requests!
+
 A `GridSearchSys` struct holds all the information needed to organize, run, and save a large number of PSID simulations.
 ```julia
 mutable struct GridSearchSys

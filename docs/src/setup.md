@@ -218,7 +218,7 @@ add_result!
 
 One of these methods adds one result and the other adds multiple at a time, one for each element of the output of the `getter` function.
 
-signature of thhe `getter` function is very important. Thankfully, there are many many examples! See [Results Getters](@ref) for all of the builtin getters you can try.
+The signature of the `getter` function is very important. See [Results Getters](@ref) for all of the builtin getters you can try and information on how to write your own.
 
 For now, let's just grab the eigenvalues of the system at the initial operating point and the transient current magnitude at each injector.
 
