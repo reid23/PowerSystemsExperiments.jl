@@ -39,13 +39,7 @@ Here's how to use this package:
 8. Analyze the data with `makeplots` or however you like (`makeplots` is still very much pre-release)
 
 ## (Super) Quick Start
-Do you just need to run a simulation or two, and don't have time to really understand your code?
-
-Are you a proud owner of the Stack Overflow copy-paste keyboard?
-
-Do you enjoy copy-pasting example code without reading it because you think it'll save you time (you know it won't)?
-
-Try this.
+Here's a complete example to get you started with the workflow. It uses the IEEE 9-bus test case.
 
 ```@example
 using Pkg; Pkg.activate("../..") # hide

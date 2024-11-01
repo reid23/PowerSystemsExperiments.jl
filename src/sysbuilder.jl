@@ -552,7 +552,7 @@ function save_serde_data(gss::GridSearchSys, path::String)
     progress_bar_width() = displaysize(stdout)[2]-28-Int(2*(floor(log10(numfiles))+1))-length(path)
     print("Writing files to $path: |"*(" "^progress_bar_width())*"| (0/$(numfiles))")
     Threads.@threads for (i, df) in collect(enumerate(Iterators.partition(gss.df, isfinite(gss.chunksize) ? gss.chunksize : nrow(gss.df))))
-        Serialization.serialize(joinpath(path, "results$(i).jls"), df)
+        Serialization.serialize(joinpath(path, "results$(i-1).jls"), df)
         files_written = Threads.atomic_add!(counter, 1) + 1
         boxes = Int(round((files_written/numfiles)*progress_bar_width()))
         print("\r"*(" "^(displaysize(stdout)[2])))
@@ -581,13 +581,20 @@ function save_serde_data(gss::GridSearchSys, path::String)
 end
 
 """
-    load_serde_data(path::String)
+    load_serde_data(path::String; load_gss::Bool=true)
 
-Loads serialized dataframe from file or folder.
+Loads serialized data from file or folder.
 
-If `path` is a folder, looks for all non-hidden .jls files, reads them, and concatenates them.
+If `path` is a folder (indented use):
+ 1. read all non-hidden .jls files and concatenate the DataFrames from them
+ 2. if `.hfile` exists, read it to define any necessary functions (not fully working)
+ 3. if `load_gss` is `true` and `.gss` exists, read it to load the GridSearchSys object and attach the DataFrame to it.
+ then, return either the concatenated DataFrame or the GridSearchSys object containing it.
+If `path` is a file (backup data recovery option):
+ 1. deserialize file
+ 2. return the result
 """
-function load_serde_data(path::String)
+function load_serde_data(path::String; load_gss::Bool=true)
     if !isdir(path)
         if !isfile(path) AssertionError("Could not load data from path: `$path` does not exist.") end
         return Serialization.deserialize(path)
@@ -601,6 +608,7 @@ function load_serde_data(path::String)
     if ".hfile" ∈ readdir(path)
         # println(abspath(path))
         # println(joinpath(path, ".hfile"))
+        
         include(joinpath(abspath(path), ".hfile"))
     end
     # println(files)
@@ -616,7 +624,7 @@ function load_serde_data(path::String)
         print("\rReading files from $path: |"*("@"^boxes)*(" "^(progress_bar_width()-boxes))*"| ($files_read/$(length(files)))")
     end
     println("\nDone!")
-    if ".gss" ∈ readdir(path)
+    if load_gss && ".gss" ∈ readdir(path)
         gss = load_serde_data(joinpath(path, ".gss"))
         Meta.parse(gss.hfile)
         gss.df = vcat(dfs...)

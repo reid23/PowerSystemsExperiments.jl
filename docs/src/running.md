@@ -115,6 +115,6 @@ gss.df
  - if your perturbation does not occur at $$t=0.5$$, make sure to pass the `tstops` argument and include at least the time of your perturbation. This significantly helps numerical stability.
  - `execute_sims!` is fully parallelized, so use as many cores as you can! sometimes the REPL is limited to one thread, so I've found more success running sims from the command line and passing an explicit thread count with `julia -t $(nproc) my_experiments.jl`.
     - be sure to mind your memory usage - these systems are big and therefore solving them can be costly.
-    - use `tmux` so you don't have to sit there all day remoted into the server.
- - don't spend a ton of time trying to tune `ida_opts`. It doesn't help much.
- - mind the ratio of the time span to `dtmax`. The data accumulates quickly, and RAM is limited. If you really need very small `dtmax`, decrease the chunk size.
+    - `tmux` is a useful tool that lets you create a terminal that keeps running after you detach from it, so you don't have to stay connected to a server or keep your computer awake while running simulations.
+ - tuning `ida_opts` did not prove very fruitful; unless you have deep knowledge of how IDA works, don't spend a ton of time tuning.
+ - be careful about the ratio of the time span to `dtmax`. The data accumulates quickly, and RAM is limited. If you really need very small `dtmax`, decrease the chunk size.

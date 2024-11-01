@@ -33,7 +33,7 @@ To prevent it from saving anything, you can run
 set_chunksize(gss, Inf)
 ```
 
-## The header file and associated shenanigans
+## The header file and associated hacks
 One issue with serialization is that it doesn't work with user-defined functions. For example, if we tried to save our `gss` from before, it would save some reference to the `set_power_setpt!` function, but wouldn't save it. Therefore, we need to redefine it wherever we want to load back our results. 
 
 But unless you're trying to run the simulations again, you don't *really* need the function definition. You just need something for it to refer to. As a result, my quick hack is that every time we reference an external function, we add `"function {name} end; "` to the `gss.hfile` variable. Then we eval this string when we load the `gss` object back, and it all works!
@@ -41,8 +41,8 @@ But unless you're trying to run the simulations again, you don't *really* need t
 ...In theory, at least. The best solution is always to simply import or copy the definitions into wherever you need them. If you are having issues, you can typically just open the file (`.hfile` in the save directory) and delete whichever functions are screaming at you.
 
 ## If all else fails
-Obviously, the saved data is of great importance, since it often takes forever to produce. Therefore, I wanted to make sure that even if my funny additions on top of `Serialization` didn't work, you wouldn't lose your data.
+Because this functionality is still in development, it has been designed to allow you to bypass everything and get to your data no matter what happens. If the data fails to load, you can just load the dataframe with the results without the `GridSearchSys` object. This means you won't be able to use `add_results!`, but you can still do the same thing manually, since all the data will be present.
 
-Accordingly, the `load_serde_data` function will also accept a path to one of the `.jls` files saved by `save_serde_data`. These are just plain serialized `DataFrame`s, and they load back quite reliably. 
+The `load_serde_data` function will also accept a path to one of the `.jls` files saved by `save_serde_data`. These are just plain serialized `DataFrame`s, and they load back quite reliably. 
 
 If you don't *have* to do this, avoid it, but it's there just in case.
