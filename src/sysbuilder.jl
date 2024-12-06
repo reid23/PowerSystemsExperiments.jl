@@ -719,6 +719,9 @@ function runSim(system, change=BranchTrip(0.5, ACBranch, "Bus 5-Bus 4-i_1"), mod
         # file_level=Logging.Error
         # initialize_simulation=false,
     )
+    if sim.status == PowerSimulationsDynamics.BUILD_FAILED
+        return (sim, missing, Base.time_ns()-tic, "BUILD FAILED")
+    end
     # println("HERE2")
     try
         sm = small_signal_analysis(sim)
