@@ -207,6 +207,16 @@ end
 add_generic_sweep!(gss, "ZIPE Params", add_zipe_load, ZIPE_params_to_try)
 gss
 ```
+## Additional Configuration
+
+The `add_generic_sweep!` method can also be used to perform any configuration you want to the system after all the other setup has been done. Simply add a dummy parameter with a single value, and perform the changes you'd like.  
+
+This can be used to set custom initial conditions: use the `set_initial_conditions!` method and add a sweep.
+```julia
+x0 = [...] # your custom initial values here
+add_generic_sweep!(gss, "x0", PSE.set_initial_conditions!, [x0])
+```
+
 
 ## Results
 

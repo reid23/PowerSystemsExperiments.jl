@@ -326,6 +326,14 @@ function add_generic_sweep!(gss::GridSearchSys, title::String, adder::Function, 
     gss.sysdict = newsysdict;
 end
 
+function set_initial_conditions!(s::System, x0::Vector{Float64})
+    if isnothing(s.internal.ext)
+        s.internal.ext = Dict()
+    end
+    s.internal.ext[:x0] = x0
+    return s
+end
+
 """
     add_zipe_sweep!(gss::GridSearchSys, standardLoadFunction::Union{Function, Missing}, zipe_params::Vector{LoadParams})
 
@@ -429,9 +437,9 @@ end
 """
 ```julia
 execute_sims!(
-    gss::GridSearchSys, 
-    change::PSID.Perturbation; 
+    gss::GridSearchSys;
     
+    change::Union{PSID.Perturbation, Nothing},
     tspan::Tuple{Float64, Float64}=(0.48, 0.55), 
     tstops::Vector{Float64}=[0.5]
     dtmax=0.0005, 
@@ -446,7 +454,7 @@ Fully parallelized.
 
 ## Args
  - `gss::GridSearchSys` : the systems
- - `change::Perturbation` : perturbation to apply to the system
+ - `change::Union{Perturbation, Nothing}` : perturbation to apply to the system, or `nothing` for no perturbation.
  - `tspan::Tuple{Float64, Float64}` : time interval (in seconds) to simulate.
  - `tstops::Vector{Float64}` : `tstops` argument for DifferentialEquations.jl solver - places to force a solver step.
  - `dtmax::Float64` : max timestep for solver (make sure λh is in the feasible region for the solver)
@@ -461,9 +469,9 @@ If `gss.chunksize` is finite, the final dataframe will be saved. This way all re
 To not save anything to file and keep the results in gss.df, make sure to `set_chunksize(gss, Inf)`.
 """
 function execute_sims!(
-    gss::GridSearchSys, 
-    change::PSID.Perturbation; 
-    
+    gss::GridSearchSys;
+
+    change::Union{PSID.Perturbation, Nothing}=nothing,
     tspan::Tuple{Float64, Float64}=(0.48, 0.55), 
     tstops::Vector{Float64} = [0.5],
     dtmax=0.0005, 
@@ -517,6 +525,21 @@ function execute_sims!(
             write(file, gss.hfile)
         end
     end
+end
+
+# for backwards compatibiility
+function execute_sims!(
+    gss::GridSearchSys,
+    change::PSID.Perturbation;
+
+    tspan::Tuple{Float64, Float64}=(0.48, 0.55), 
+    tstops::Vector{Float64} = [0.5],
+    dtmax=0.0005, 
+    run_transient::Bool=true, 
+    log_path::String="sims",
+    ida_opts::Dict{Symbol, Any} = Dict(:linear_solver=>:Dense, :max_convergence_failures=>5),
+) 
+    execute_sims!(gss, change=change, tspan=tspan, tstops=tstops, dtmax=dtmax, run_transient=run_transient, log_path=log_path, ida_opts=ida_opts)
 end
 
 function _save_serde_data(df::DataFrame, path::String)
@@ -703,18 +726,25 @@ little wrapper to run simulations
 ## Returns:
  - `(Simulation, SmallSignalOutput, UInt64, String)`: the Simulation object, the small signal analysis object, the time in nanoseconds the simulation took, and the error message. All but the time might be `missing` if things failed.
 """
-function runSim(system, change=BranchTrip(0.5, ACBranch, "Bus 5-Bus 4-i_1"), model=ResidualModel, tspan=(0., 5.), tstops=[0.5], solver=IDA(linear_solver=:LapackDense, max_convergence_failures=5), dtmax=0.001, run_transient=true, log_path::String=mktempdir())
+function runSim(system, change::Union{PSID.Perturbation, Nothing}, model=ResidualModel, tspan=(0., 5.), tstops=[0.5], solver=IDA(linear_solver=:LapackDense, max_convergence_failures=5), dtmax=0.001, run_transient=true, log_path::String=mktempdir())
     tic = Base.time_ns()
     local sim, sm
     solve_ac_powerflow!(system)
     # println("HERE1")
+    sim_args = [ResidualModel, system, log_path, tspan]
+    if !isnothing(change)
+        push!(sim_args, change)
+    end
+    sim_kwargs = Dict()
+    sim_kwargs[:disable_timer_outputs] = true # needed for multiprocessing
+    if !isnothing(system.internal.ext) && :x0 in keys(system.internal.ext)
+        sim_kwargs[:initialize_simulation] = false
+        sim_kwargs[:initial_conditions] = system.internal.ext[:x0]
+    end
+
     sim = Simulation(
-        model,
-        system,
-        log_path,
-        tspan,
-        change,
-        disable_timer_outputs=true, # needed for multiprocessing
+        sim_args...;
+        sim_kwargs...
         # console_level=Logging.Error,
         # file_level=Logging.Error
         # initialize_simulation=false,

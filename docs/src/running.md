@@ -111,9 +111,9 @@ gss.df
 ```
 
 ## Notes
- - You must only use one perturbation if you want to save the results to file. For some reason, passing a `Vector{Perturbation}` changes something about the typing and breaks serialization.
+ - You must only use at most one perturbation if you want to save the results to file. For some reason, passing a `Vector{Perturbation}` changes something about the typing and breaks serialization.
  - if your perturbation does not occur at $$t=0.5$$, make sure to pass the `tstops` argument and include at least the time of your perturbation. This significantly helps numerical stability.
- - `execute_sims!` is fully parallelized, so use as many cores as you can! sometimes the REPL is limited to one thread, so I've found more success running sims from the command line and passing an explicit thread count with `julia -t $(nproc) my_experiments.jl`.
+ - `execute_sims!` is fully parallelized, so use as many cores as you can! Sometimes the REPL is limited to one thread, so I've found more success running sims from the command line and passing an explicit thread count with `julia -t $(nproc) my_experiments.jl`.
     - be sure to mind your memory usage - these systems are big and therefore solving them can be costly.
     - `tmux` is a useful tool that lets you create a terminal that keeps running after you detach from it, so you don't have to stay connected to a server or keep your computer awake while running simulations.
  - tuning `ida_opts` did not prove very fruitful; unless you have deep knowledge of how IDA works, don't spend a ton of time tuning.
