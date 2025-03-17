@@ -256,6 +256,12 @@ function GridSearchSys(
     if !(sys.data.time_series_storage isa InfrastructureSystems.InMemoryTimeSeriesStorage)
         @warn "Static time series storage detected. Saving to file may miss system time series storage."
     end
+    if !(sys.internal.ext isa Dict)
+        sys.internal.ext = Dict(("post_sim"=>Vector{Function}()))
+    elseif !(get(sys.internal.ext, "post_sim", nothing) isa Vector)
+        sys.internal.ext["post_sim"] = Vector{Function}()
+    end
+
     sysdict = makeSystems(sys, injectors, busgroups)
     newsysdict = Dict()
     for (key, val) in sysdict
@@ -281,6 +287,7 @@ function GridSearchSys(
         add_result!(gss, "sm", get_sm)
         add_result!(gss, "dt", get_dt)
     end
+    # gss.hfile = "using PowerSystemsExperiments; const PSE=PowerSystemsExperiments;"
     return gss
 end
 
@@ -290,7 +297,7 @@ end
 
 add arbitrary sweeps to a GridSearch. uses `adder` to set a parameter of a system to each of the values in `params`.
  - `title` is the name of the variable this sweep changes.
- - `adder`: `Fn(System, T) -> System`. Modifying the system in-place is OK.
+ - `adder`: `Fn(System, T) -> System`. Modifying the system in-place is preferred but whatever is returned will be used.
  - `params`: `Vector<T>`
 """
 function add_generic_sweep!(gss::GridSearchSys, title::String, adder::Function, params::Vector{T}) where T
@@ -326,12 +333,48 @@ function add_generic_sweep!(gss::GridSearchSys, title::String, adder::Function, 
     gss.sysdict = newsysdict;
 end
 
-function set_initial_conditions!(s::System, x0::Vector{Float64})
-    if isnothing(s.internal.ext)
-        s.internal.ext = Dict()
+"""
+    add_post_sim_sweep(gss::GridSearchSys, title::String, adder::Function, params::Vector)
+
+like [`add_generic_sweep!`](@ref), but operates on the PSID `Simulation` object instead of the `System`.
+ - `title` is the name of the variable this sweep changes.
+ - `adder`: `Fn(Simulation, T) -> Simulation`. Modifying the simulation in-place is preferred for efficiency but whatever is returned will be used.
+ - `params`: `Vector<T>`
+"""
+function add_post_sim_sweep!(gss::GridSearchSys, title::String, adder::Function, params::Vector{T}) where T
+    gss.hfile *= "function $(string(Symbol(adder))) end; "
+    newsysdict = Dict()
+    for (key, s) in gss.sysdict
+        for p in params
+            newsysdict[[key..., p]] = ((s, p, adder)->(()->(sys=s(); push!(sys.internal.ext["post_sim"], (sim)->adder(sim, p)); sys)))(s, p, adder)
+        end
     end
-    s.internal.ext[:x0] = x0
-    return s
+    _add_column!(gss, title)
+    gss.sysdict = newsysdict;
+end
+
+function instantiate_sim(
+    sys::System; 
+    change::Union{PSID.Perturbation, Nothing} = nothing, 
+    model::Type{T} = ResidualModel, 
+    tspan::Tuple{Real, Real} = (0.48, 0.55),
+    log_path::AbstractString = mktempdir(),
+)::Simulation{T} where T <: PSID.SimulationModel
+    sim_args = [model, sys, log_path, tspan, if isnothing(change) Vector{PSID.Perturbation}() else change end]
+
+    sim = Simulation(
+        sim_args...;
+        disable_timer_outputs = true,
+    )
+    if !isnothing(sys.internal.ext) && "post_sim" in keys(sys.internal.ext)
+        for f in sys.internal.ext["post_sim"]
+            s = f(sim)
+            if s isa Simulation
+                sim = s
+            end
+        end
+    end
+    return sim
 end
 
 """
@@ -399,7 +442,7 @@ This is based around the TLModels.jl package, so linemodelAdders could for examp
 """
 function add_lines_sweep!(gss::GridSearchSys, lineParams::Vector{LineModelParams}, linemodelAdders::Dict{String, Function}=Dict("statpi"=>create_statpi_system, "dynpi"=>create_dynpi_system, "mssb"=>create_MSSB_system))
     for f in values(linemodelAdders)
-        gss.hfile *= "function $(string(Symbol(f))) end; "
+        gss.hfile *= "function PowerSystemsExperiments.$(string(Symbol(f))) end; "
     end
     _add_column!(gss, "Line Model")
     _add_column!(gss, "Line Params")
@@ -726,29 +769,20 @@ little wrapper to run simulations
 ## Returns:
  - `(Simulation, SmallSignalOutput, UInt64, String)`: the Simulation object, the small signal analysis object, the time in nanoseconds the simulation took, and the error message. All but the time might be `missing` if things failed.
 """
-function runSim(system, change::Union{PSID.Perturbation, Nothing}, model=ResidualModel, tspan=(0., 5.), tstops=[0.5], solver=IDA(linear_solver=:LapackDense, max_convergence_failures=5), dtmax=0.001, run_transient=true, log_path::String=mktempdir())
+function runSim(
+    system::System, 
+    change::Union{PSID.Perturbation, Nothing}, 
+    model::Type{S} = ResidualModel, 
+    tspan::Tuple{Real, Real} = (0., 5.), 
+    tstops::Vector{T} = [0.5], 
+    solver=IDA(linear_solver=:LapackDense, max_convergence_failures=5), 
+    dtmax::Real = 0.001, 
+    run_transient::Bool = true, 
+    log_path::AbstractString = mktempdir()
+) where {T <: Real, S <: PSID.SimulationModel}
     tic = Base.time_ns()
     local sim, sm
-    solve_ac_powerflow!(system)
-    # println("HERE1")
-    sim_args = [ResidualModel, system, log_path, tspan]
-    if !isnothing(change)
-        push!(sim_args, change)
-    end
-    sim_kwargs = Dict()
-    sim_kwargs[:disable_timer_outputs] = true # needed for multiprocessing
-    if !isnothing(system.internal.ext) && :x0 in keys(system.internal.ext)
-        sim_kwargs[:initialize_simulation] = false
-        sim_kwargs[:initial_conditions] = system.internal.ext[:x0]
-    end
-
-    sim = Simulation(
-        sim_args...;
-        sim_kwargs...
-        # console_level=Logging.Error,
-        # file_level=Logging.Error
-        # initialize_simulation=false,
-    )
+    sim = instantiate_sim(system, change=change, model=model, tspan=tspan, log_path=log_path)
     if sim.status == PowerSimulationsDynamics.BUILD_FAILED
         return (sim, missing, Base.time_ns()-tic, "BUILD FAILED")
     end

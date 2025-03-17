@@ -207,15 +207,27 @@ end
 add_generic_sweep!(gss, "ZIPE Params", add_zipe_load, ZIPE_params_to_try)
 gss
 ```
-## Additional Configuration
+## Configuration of the `Simulation` object
 
-The `add_generic_sweep!` method can also be used to perform any configuration you want to the system after all the other setup has been done. Simply add a dummy parameter with a single value, and perform the changes you'd like.  
+The `add_post_sim_sweep!` method can be used to add sweeps after the `PSID.Simulation` object is built. It follows a very similar pattern.
 
-This can be used to set custom initial conditions: use the `set_initial_conditions!` method and add a sweep.
-```julia
-x0 = [...] # your custom initial values here
-add_generic_sweep!(gss, "x0", PSE.set_initial_conditions!, [x0])
+```@docs; canonical=false
+add_post_sim_sweep!(gss::GridSearchSys, title::String, adder::Function, params::Vector{T}) where T
 ```
+
+There are a variety of potential use cases, though the only currently explored one is setting the initial conditions of the simulation:
+
+
+```julia
+function change_initial_conditions!(sim::Simulation, factor::Real)
+    sim.x0_init .*= factor
+    return sim
+end
+
+add_post_sim_sweep!(gss, "initial conditions", change_initial_conditions!, [1.0, 1.001, 1.01])
+```
+
+Note that this particular strategy is not well tested and not guaranteed to work.
 
 
 ## Results

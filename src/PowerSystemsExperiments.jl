@@ -12,6 +12,7 @@ export makeSystems
 export add_result!
 export set_chunksize!
 export add_generic_sweep!
+export add_post_sim_sweep!
 export add_zipe_sweep!
 export add_lines_sweep!
 export length

@@ -71,7 +71,7 @@ sm_inj() = DynamicGenerator("SM", 1.0,
 # construct GridSearchSys
 gss = GridSearchSys(
     System(path_to_my_raw_file),
-    [gfm_inj() gfm_inj() gfm_inj()   # test case 1
+    [gfm_inj() gfm_inj() gfm_inj()  # test case 1
      sm_inj()  sm_inj()  sm_inj()],  # test case 2
     ["Bus1",   "Bus 2",  "Bus 3"],   # corresponding order of buses
 )
@@ -87,7 +87,7 @@ add_result!(gss, "Time", PSE.get_time)
 # run simulations
 execute_sims!(
     gss,
-    BranchImpedanceChange(0.5, ACBranch, "Bus 5-Bus 4-i_1", 1.2), 
+    change=BranchImpedanceChange(0.5, ACBranch, "Bus 5-Bus 4-i_1", 1.2), 
     tspan=(0.49, 0.55), 
     dtmax=0.05, 
     run_transient=true, 
