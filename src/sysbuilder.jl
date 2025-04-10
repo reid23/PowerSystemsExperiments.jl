@@ -442,7 +442,7 @@ This is based around the TLModels.jl package, so linemodelAdders could for examp
 """
 function add_lines_sweep!(gss::GridSearchSys, lineParams::Vector{LineModelParams}, linemodelAdders::Dict{String, Function}=Dict("statpi"=>create_statpi_system, "dynpi"=>create_dynpi_system, "mssb"=>create_MSSB_system))
     for f in values(linemodelAdders)
-        gss.hfile *= "function PowerSystemsExperiments.$(string(Symbol(f))) end; "
+        gss.hfile *= "function $(string(Symbol(f))) end; "
     end
     _add_column!(gss, "Line Model")
     _add_column!(gss, "Line Params")
