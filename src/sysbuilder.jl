@@ -355,7 +355,7 @@ end
 
 function instantiate_sim(
     sys::System; 
-    change::Union{PSID.Perturbation, Nothing} = nothing, 
+    change::Union{PSID.Perturbation, Vector{<:PSID.Perturbation}, Nothing} = nothing, 
     model::Type{T} = ResidualModel, 
     tspan::Tuple{Real, Real} = (0.48, 0.55),
     log_path::AbstractString = mktempdir(),
@@ -771,7 +771,7 @@ little wrapper to run simulations
 """
 function runSim(
     system::System, 
-    change::Union{PSID.Perturbation, Nothing}, 
+    change::Union{PSID.Perturbation, Vector{<:PSID.Perturbation}, Nothing}, 
     model::Type{S} = ResidualModel, 
     tspan::Tuple{Real, Real} = (0., 5.), 
     tstops::Vector{T} = [0.5], 
