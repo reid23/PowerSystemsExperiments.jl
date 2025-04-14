@@ -514,7 +514,7 @@ To not save anything to file and keep the results in gss.df, make sure to `set_c
 function execute_sims!(
     gss::GridSearchSys;
 
-    change::Union{PSID.Perturbation, Nothing}=nothing,
+    change::Union{PSID.Perturbation, Vector{<:PSID.Perturbation}, Nothing}=nothing,
     tspan::Tuple{Float64, Float64}=(0.48, 0.55), 
     tstops::Vector{Float64} = [0.5],
     dtmax=0.0005, 
